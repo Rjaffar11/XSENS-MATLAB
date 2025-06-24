@@ -9,7 +9,6 @@ for fileIdx = 1:length(filelist)
     sID = 'W014';
     tID = '001';
     filename = filelist{fileIdx};
-    
     g=9.81; % [m/s2]
     % Load acceleration and angular velocity
     tbl_acc = readtable(filename, 'Sheet', 'Segment Acceleration');
@@ -91,7 +90,7 @@ for fileIdx = 1:length(filelist)
         a_data = evalin('base', strcat('a_', s, '_mag'));
         plot(t, a_data, 'k', 'LineWidth', 1, 'Color', [0.2 0.2 0.2 0.3]);
         acc_handles(i) = plot(t(1), 0, 'r-', 'LineWidth', 2);
-        title([s ' Acc']); xlim([0 t(end)]);
+        title([s ' Acc']); xlim([0 t(end)]); ylim([0 20]);
         subplot(3,15,i+17);  % position row
         hold on; grid on;
         ind = find(strcmpi(segment_names,s));
@@ -99,7 +98,7 @@ for fileIdx = 1:length(filelist)
             z = positions{ind}(:,3);
             pos_refs(i) = plot(t, z, 'k', 'LineWidth', 1, 'Color', [0.2 0.2 0.2 0.3]);
             pos_handles(i) = plot(t(1), z(1), 'b-', 'LineWidth', 2);
-            title([s ' Z']); xlim([0 t(end)]);
+            title([s ' Z']); xlim([0 t(end)]); ylim([0 2]);
             pos = positions{ind};
             vel = [zeros(1,3); diff(pos)*fs];
             vel_mag = sqrt(sum(vel.^2, 2));
@@ -107,7 +106,7 @@ for fileIdx = 1:length(filelist)
             hold on; grid on;
             vel_refs(i) = plot(t, vel_mag, 'k', 'LineWidth', 1, 'Color', [0.2 0.2 0.2 0.3]);
             vel_handles(i) = plot(t(1), vel_mag(1), 'm-', 'LineWidth', 2);
-            title([s ' Vel']); xlim([0 t(end)]);
+            title([s ' Vel']); xlim([0 t(end)]); ylim([0 6]);
         else
             pos_handles(i) = plot(NaN, NaN);
             pos_refs(i) = plot(NaN, NaN);
