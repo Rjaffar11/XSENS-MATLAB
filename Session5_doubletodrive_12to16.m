@@ -3,8 +3,8 @@
 % Finished file
 
 clc;clear all;close all;
-filelist = {'March 6 2025-012_P006.xlsx','March 6 2025-013_P006.xlsx','March 6 2025-014_P006.xlsx','March 6 2025-015_P006.xlsx','March 6 2025-016_P006.xlsx'};  % Add all your filenames here
- 
+filelist = {'March 6 2025-012_P005.xlsx','March 6 2025-013_P005.xlsx','March 6 2025-014_P005.xlsx','March 6 2025-015_P005.xlsx','March 6 2025-016_P005.xlsx'}; 
+
 for fileIdx = 1:length(filelist)
     sID = 'W014';
     tID = '001';
@@ -107,6 +107,7 @@ for fileIdx = 1:length(filelist)
             vel_refs(i) = plot(t, vel_mag, 'k', 'LineWidth', 1, 'Color', [0.2 0.2 0.2 0.3]);
             vel_handles(i) = plot(t(1), vel_mag(1), 'm-', 'LineWidth', 2);
             title([s ' Vel']); xlim([0 t(end)]); ylim([0 6]);
+            
         else
             pos_handles(i) = plot(NaN, NaN);
             pos_refs(i) = plot(NaN, NaN);
