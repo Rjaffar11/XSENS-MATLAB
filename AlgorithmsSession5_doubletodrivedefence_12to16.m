@@ -30,7 +30,7 @@ for fileIdx = 1:nFiles
 
     z = tbl_pos.HeadZ;
     t = (0:length(z)-1)' / fs;
-    score = a_mag ./ (z + 0.005);  % Continuous score
+    score = a_mag ./ (z -min(z)+ 0.005);  % Continuous score
 
     % Top Subplot: Z-position + a_mag 
     subplot(nFiles, 2, (fileIdx-1)*2 + 1);
@@ -45,13 +45,13 @@ for fileIdx = 1:nFiles
     ylim([0, 10]);
 
 %ALGORITHM 1
-    z_floor = 0.15;         % Head below 10 cm
-    acc_thresh = 3;         % Acceleration above 5 g
+    z_floor = 0.15;         % Head below x cm
+    acc_thresh = 5;         % Acceleration above x g
     
-    % --- Detect candidate impact frames ---
+    % Detect candidate impact frames
     impact_frames = find(z < z_floor & a_mag > acc_thresh);
     
-    % --- Plot on acceleration axis (right y-axis) ---
+    %Plot on acceleration axis (right y-axis)
     hold on;
     scatter(t(impact_frames), a_mag(impact_frames), 50, 'r', 'filled');
     title(['[' num2str(fileIdx) '] ' filename], 'Interpreter','none');
