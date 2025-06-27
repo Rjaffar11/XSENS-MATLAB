@@ -41,7 +41,7 @@ for fileIdx = 1:nFiles
 
 %ALGORITHM 1
     z_floor = 0.6;         % Head below x cm
-    acc_thresh = 4;         % Acceleration above x g
+    acc_thresh = 5;         % Acceleration above x g
     
     %  Detect candidate impact frames
     impact_frames = find(z < z_floor & a_mag > acc_thresh);

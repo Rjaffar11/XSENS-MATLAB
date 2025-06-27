@@ -1,0 +1,8 @@
+"Team","Athlete","Device SN","Persisted Event #","Display Event in IOS App?","Jersey #","Position","ExternalId","Peak Linear Acceleration (PLA, g)","Peak Angular Acceleration (PAA, rad/sec^2)","Peak Linear Velocity (PLV, m/sec)","Peak Angular Velocity (PAV, rad/sec)","Work (J)","Location","Date","Local Time","Time Zone From UTC","Quality Category","Team Event Type","Team Event Name","FileFormatVersion"
+Brock University,"006, 2025",98799,726,No,"","","",29.5,4147,1.0,4.8,2.5,"BOTTOM_REAR",2025-03-06,10:42:56,-05:00,1,"","",2.4
+Brock University,"006, 2025",98799,727,Yes,"","","",8.8,717,0.8,8.0,2.3,"BOTTOM_FRONT",2025-03-06,11:02:51,-05:00,0,"","",2.4
+Brock University,"006, 2025",98799,728,Yes,"","","",6.4,340,0.7,7.3,1.5,"FRONT_LOW",2025-03-06,11:03:32,-05:00,0,"","",2.4
+Brock University,"006, 2025",98799,729,Yes,"","","",8.0,667,0.9,9.0,2.5,"BOTTOM_FRONT",2025-03-06,11:06:16,-05:00,0,"","",2.4
+Brock University,"006, 2025",98799,730,Yes,"","","",16.0,868,1.4,9.0,5.6,"FRONT_LOW",2025-03-06,11:06:43,-05:00,0,"","",2.4
+Brock University,"005, 2025",99526,222,Yes,"","","",6.4,417,0.7,4.5,1.2,"BOTTOM_FRONT",2025-03-06,11:09:08,-05:00,0,"","",2.4
+Brock University,"005, 2025",99526,223,No,"","","",4.4,628,0.4,10.0,1.3,"BOTTOM_FRONT",2025-03-06,11:54:06,-05:00,0,"","",2.4
