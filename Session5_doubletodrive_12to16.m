@@ -3,7 +3,13 @@
 % Finished file
 
 clc;clear all;close all;
-filelist = {'March 6 2025-012_P005.xlsx','March 6 2025-013_P005.xlsx','March 6 2025-014_P005.xlsx','March 6 2025-015_P005.xlsx','March 6 2025-016_P005.xlsx'}; 
+filelist = {
+    'March 6 2025-012_P006.xlsx',
+    'March 6 2025-013_P006.xlsx',
+    'March 6 2025-014_P006.xlsx',
+    'March 6 2025-015_P006.xlsx',
+    'March 6 2025-016_P006.xlsx'
+};
 
 for fileIdx = 1:length(filelist)
     sID = 'W014';
@@ -27,6 +33,9 @@ for fileIdx = 1:length(filelist)
     pos_refs = gobjects(1, length(segments));
     vel_handles = gobjects(1, length(segments));
     vel_refs = gobjects(1, length(segments));
+    h_jerk = gobjects(1,1);
+    h_whip_neck = gobjects(1,1);
+    h_whip_torso = gobjects(1,1);
     jerk = struct();
     for i = 1:length(segments)
         s = segments{i};
@@ -119,8 +128,9 @@ for fileIdx = 1:length(filelist)
     subplot(3,15,length(segments)+3);
     hold on; grid on;
     plot(t, jerk.Head, 'k', 'LineWidth', 1, 'Color', [0.2 0.2 0.2 0.3]);
-    plot(t(1), jerk.Head(1), 'g-', 'LineWidth', 2);
+    h_jerk = plot(t(1), jerk.Head(1), 'g-', 'LineWidth', 2);
     title('Head Jerk'); xlim([0 t(end)]);
+
     % Head–Neck whiplash (row 2, col 16)
     subplot(3,15,length(segments)+18);
     v_head = positions{strcmp(segment_names,'Head')};
@@ -129,19 +139,20 @@ for fileIdx = 1:length(filelist)
     vel_neck = [zeros(1,3); diff(v_neck)*fs];
     vh_mag = sqrt(sum(vel_head.^2,2));
     vn_mag = sqrt(sum(vel_neck.^2,2));
-    hold on; grid on;
+    grid on; hold on;
     plot(t, vh_mag - vn_mag, 'k', 'LineWidth', 1, 'Color', [0.2 0.2 0.2 0.3]);
-    plot(t(1), vh_mag(1) - vn_mag(1), 'g-', 'LineWidth', 2);
-    title('Head–Neck Whiplash'); xlim([0 t(end)]);
+    h_whip_neck = plot(t(1), vh_mag(1) - vn_mag(1), 'g-', 'LineWidth', 2);
+    title('Head–Neck Whiplash'); xlim([0 t(end)]); 
+
     % Head–Torso whiplash (row 3, col 16)
     subplot(3,15,length(segments)+33);
     v_torso = positions{strcmp(segment_names,'T8')};
     vel_torso = [zeros(1,3); diff(v_torso)*fs];
     vtorso_mag = sqrt(sum(vel_torso.^2,2));
-    hold on; grid on;
+    grid on; hold on;
     plot(t, vh_mag - vtorso_mag, 'k', 'LineWidth', 1, 'Color', [0.2 0.2 0.2 0.3]);
-    plot(t(1), vh_mag(1) - vtorso_mag(1), 'g-', 'LineWidth', 2);
-    title('Head–Torso Whiplash'); xlim([0 t(end)]);
+    h_whip_torso = plot(t(1), vh_mag(1) - vtorso_mag(1), 'g-', 'LineWidth', 2);
+    title('Head–Torso Whiplash'); xlim([0 t(end)]); 
     % Animate
     for k = 1:nFrames
         subplot(3,15,[1 2 16 17 31 32]);
@@ -174,12 +185,10 @@ for fileIdx = 1:length(filelist)
             end
         end
         subplot(3,15,length(segments)+3);
-        set(findall(gca, 'Type', 'line', 'Color', 'g'), 'XData', t(1:k), 'YData', jerk.Head(1:k));
-        subplot(3,15,length(segments)+18);
-        set(findall(gca, 'Type', 'line', 'Color', 'g'), 'XData', t(1:k), 'YData', (vh_mag(1:k) - vn_mag(1:k)));
-        subplot(3,15,length(segments)+33);
-        set(findall(gca, 'Type', 'line', 'Color', 'g'), 'XData', t(1:k), 'YData', (vh_mag(1:k) - vtorso_mag(1:k)));
-        drawnow;
+        set(h_jerk, 'XData', t(1:k), 'YData', jerk.Head(1:k));
+        set(h_whip_neck, 'XData', t(1:k), 'YData', vh_mag(1:k) - vn_mag(1:k));
+        set(h_whip_torso, 'XData', t(1:k), 'YData', vh_mag(1:k) - vtorso_mag(1:k));
+
         pause(0.01);
     end
 end     

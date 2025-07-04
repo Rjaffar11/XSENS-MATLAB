@@ -77,12 +77,17 @@ for figIdx = 1:nFigures
              'VerticalAlignment','bottom', 'Color','k', 'FontSize', 8);
 
         % Mark z_min on top subplot
-        subplot(filesPerFigure, 2, (subplotIdx-1)*2 + 1);
-        yyaxis left;
-        hold on;
-        z_min_global_idx = start_idx + min_z_rel_idx - 1;
-        scatter(t(z_min_global_idx), z(z_min_global_idx), 50, 'b', 'filled');
-        text(t(z_min_global_idx), z(z_min_global_idx), '  z_{min}', ...
-             'Color', 'b', 'FontSize', 8, 'VerticalAlignment', 'top');
+        % Mark z_min only if there is actual vertical motion
+        if range(z_window) > 0.01  % adjust threshold if needed
+            z_min_global_idx = start_idx + min_z_rel_idx - 1;
+            subplot(filesPerFigure, 2, (subplotIdx-1)*2 + 1);
+            yyaxis left;
+            hold on;
+            scatter(t(z_min_global_idx), z(z_min_global_idx), 50, 'b', 'filled');
+            text(t(z_min_global_idx), z(z_min_global_idx), '  z_{min}', ...
+                 'Color', 'b', 'FontSize', 8, 'VerticalAlignment', 'top');
+        end
+
     end
+    drawnow;
 end

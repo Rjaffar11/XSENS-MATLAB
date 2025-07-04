@@ -90,4 +90,5 @@ for figIdx = 1:nFigures
         text(t(vz0_idx), z(vz0_idx), '  v_z=0', ...
              'Color', 'c', 'FontSize', 8, 'VerticalAlignment', 'top');
     end
+    drawnow;
 end
