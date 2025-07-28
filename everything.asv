@@ -64,7 +64,7 @@ for figIdx = 1:nFigures
         [min_z_in_window, min_z_rel_idx] = min(z_window);
         z_min_global_idx = start_idx + min_z_rel_idx - 1;
         z_vel0_dynamic = z(vz0_idx);
-        score = a_mag ./ (z - min(z)+0.0001);
+        score = a_mag ./ (z - min(z));
         [max_score, max_idx] = max(score);
 
    % SUBPLOT 1: Z-pos + a_mag 

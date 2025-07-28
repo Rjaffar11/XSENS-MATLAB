@@ -1,0 +1,160 @@
+% Author = "Rashad Jaffar"
+% Date = 07.23.2025
+% dbl to drive offence
+
+clc; clear all; close all;
+
+filelist = {
+    'March 6 2025-012_P06.xlsx',
+    'March 6 2025-013_P06.xlsx',
+    'March 6 2025-014_P06.xlsx',
+    'March 6 2025-015_P06.xlsx',
+    'March 6 2025-016_P06.xlsx',
+    'March 6 2025-017_P05.xlsx',
+    'March 6 2025-018_P05.xlsx',
+    'March 6 2025-019_P05.xlsx',
+    'March 6 2025-020_P05.xlsx',
+    'March 6 2025-021_P05.xlsx'
+};
+
+fs = 60; g = 9.81;
+
+for fileIdx = 1:length(filelist)
+    filename = filelist{fileIdx};
+    tbl_acc = readtable(filename, 'Sheet', 'Segment Acceleration');
+    tbl_pos = readtable(filename, 'Sheet', 'Segment Position');
+    tbl_vel = readtable(filename, 'Sheet', 'Segment Velocity');
+    tbl_rot = readtable(filename, 'Sheet', 'Segment Angular Acceleration');
+
+    t = (0:height(tbl_pos)-1)' / fs;
+    z = tbl_pos.HeadZ;
+    ax = tbl_acc.HeadX; ay = tbl_acc.HeadY; az = tbl_acc.HeadZ;
+    a_mag = sqrt(ax.^2 + ay.^2 + az.^2) / g;
+    velz = tbl_vel.HeadZ;
+
+    wx = tbl_rot.HeadX;
+    wy = tbl_rot.HeadY;
+    wz = tbl_rot.HeadZ;
+    w_mag = sqrt(wx.^2 + wy.^2 + wz.^2);
+
+    [~, peak_acc_idx] = max(a_mag);
+    window_radius = round(1 * fs);
+    start_idx = max(1, peak_acc_idx - window_radius);
+    end_idx = min(length(z), peak_acc_idx + window_radius);
+    velz_window = velz(start_idx:end_idx);
+    [~, vz0_rel_idx] = min(abs(velz_window));
+    vz0_idx = start_idx + vz0_rel_idx - 1;
+
+    z_window = z(start_idx:end_idx);
+    [~, min_z_rel_idx] = min(z_window);
+    z_min_global_idx = start_idx + min_z_rel_idx - 1;
+    score = a_mag ./ (z - min(z));
+    [max_score, max_idx] = max(score);
+
+    % Threshold impact markers
+    z_floor = 0.6; acc_thresh = 5;
+    impact_frames = find(z < z_floor & a_mag > acc_thresh);
+
+    % Extract segment positions
+    tbl_vars = tbl_pos.Properties.VariableNames;
+    segment_names = {}; positions = {};
+    for i = 2:3:length(tbl_vars)-2
+        base = tbl_vars{i}(1:end-1);
+        if all(ismember({[base 'X'], [base 'Y'], [base 'Z']}, tbl_vars))
+            segment_names{end+1} = base;
+            positions{end+1} = [tbl_pos{:, [base 'X']}, tbl_pos{:, [base 'Y']}, tbl_pos{:, [base 'Z']}];
+        end
+    end
+
+    % Setup figure
+    figure('Color','w','Name',['Animation & Graphs - ' filename]);
+    subplot(4,3,[1 2 4 5 7 8]); hold on; axis equal; grid on;
+    title(['Skeletal Animation – ' filename],'Interpreter','none');
+    xlabel('X'); ylabel('Y'); zlabel('Z');
+    view([-111 22]);
+
+    all_xyz = vertcat(positions{:});
+    min_xyz = min(all_xyz); max_xyz = max(all_xyz); margin = 0.1;
+    xlim([min_xyz(1)-margin, max_xyz(1)+margin]);
+    ylim([min_xyz(2)-margin, max_xyz(2)+margin]);
+    zlim([min_xyz(3)-margin, max_xyz(3)+margin]);
+
+    % Floor patch (light blue)
+    patch([min_xyz(1), max_xyz(1), max_xyz(1), min_xyz(1)], ...
+          [min_xyz(2), min_xyz(2), max_xyz(2), max_xyz(2)], ...
+          [min_xyz(3), min_xyz(3), min_xyz(3), min_xyz(3)], ...
+          'b', 'FaceAlpha', 0.1, 'EdgeColor', 'none');
+
+    % Segment markers
+    h = gobjects(numel(segment_names), 1);
+    for j = 1:numel(segment_names)
+        h(j) = plot3(NaN, NaN, NaN, 'o', 'MarkerSize', 4, 'MarkerFaceColor', 'k');
+    end
+
+    % Segment lines
+    connections = {
+        'Head','Neck'; 'Neck','T8'; 'T8','T12'; 'T12','L3'; 'L3','L5'; 'L5','Pelvis';
+        'Pelvis','LeftUpperLeg'; 'LeftUpperLeg','LeftLowerLeg'; 'LeftLowerLeg','LeftFoot'; 'LeftFoot','LeftToe';
+        'Pelvis','RightUpperLeg'; 'RightUpperLeg','RightLowerLeg'; 'RightLowerLeg','RightFoot'; 'RightFoot','RightToe';
+        'T8','LeftUpperArm'; 'LeftUpperArm','LeftForearm'; 'LeftForearm','LeftHand';
+        'T8','RightUpperArm'; 'RightUpperArm','RightForearm'; 'RightForearm','RightHand'};
+    lines = gobjects(size(connections,1), 1);
+    for i = 1:size(connections,1)
+        lines(i) = plot3(NaN(1,2), NaN(1,2), NaN(1,2), 'k-', 'LineWidth', 1.5);
+    end
+
+    % Plot 1: Z-pos + a_mag
+    subplot(4,3,3); hold on; grid on;
+    yyaxis left;
+    plot(t, z, 'Color', [0.2 0.2 1 0.2]);
+    h_z = plot(NaN, NaN, 'b-', 'LineWidth', 2); ylabel('Z Pos (m)'); ylim([0 2]);
+    yyaxis right;
+    plot(t, a_mag, 'Color', [0.1 0.1 0.1 0.2]);
+    h_a = plot(NaN, NaN, 'k-', 'LineWidth', 2); ylabel('a_{mag} (g)'); ylim([0 15]);
+    title('Z + a_{mag}');
+    scatter(t(impact_frames), a_mag(impact_frames), 50, 'r', 'filled');  % red markers
+    scatter(t(vz0_idx), z(vz0_idx), 50, 'c', 'filled');
+    scatter(t(z_min_global_idx), z(z_min_global_idx), 50, 'b', 'filled');
+
+    % Plot 2: Algorithm 2 score
+    subplot(4,3,6); hold on; grid on;
+    plot(t, score, 'Color', [1 0 1 0.2]);
+    h_score = plot(NaN, NaN, 'm-', 'LineWidth', 2);
+    title('a_{mag} / (z - min(z))'); ylim([0 10000]);
+    ylabel('Score'); xlabel('Time (s)');
+    scatter(t(max_idx), max_score, 60, 'k', 'filled');
+
+    % Plot 3: Angular acceleration
+    subplot(4,3,9); hold on; grid on;
+    plot(t, w_mag, 'Color', [0.2 0.6 0.2 0.2]);
+    h_w = plot(NaN, NaN, 'g-', 'LineWidth', 2);
+    title('Head Angular Acceleration Magnitude'); ylim([0 2000]);
+    ylabel('rad/s^2'); xlabel('Time (s)');
+
+    % Animate
+    for k = 1:length(t)
+        subplot(4,3,[1 2 4 5 7 8]);
+        for j = 1:numel(segment_names)
+            h(j).XData = positions{j}(k,1);
+            h(j).YData = positions{j}(k,2);
+            h(j).ZData = positions{j}(k,3);
+        end
+        for i = 1:size(connections,1)
+            idx1 = find(strcmp(segment_names, connections{i,1}));
+            idx2 = find(strcmp(segment_names, connections{i,2}));
+            if ~isempty(idx1) && ~isempty(idx2)
+                p1 = positions{idx1}(k,:);
+                p2 = positions{idx2}(k,:);
+                set(lines(i), 'XData', [p1(1), p2(1)], 'YData', [p1(2), p2(2)], 'ZData', [p1(3), p2(3)]);
+            end
+        end
+
+        % Animate line plots
+        set(h_z, 'XData', t(1:k), 'YData', z(1:k));
+        set(h_a, 'XData', t(1:k), 'YData', a_mag(1:k));
+        set(h_score, 'XData', t(1:k), 'YData', score(1:k));
+        set(h_w, 'XData', t(1:k), 'YData', w_mag(1:k));
+
+        pause(0.03);  % slowed animation
+    end
+end
