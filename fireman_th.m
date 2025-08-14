@@ -1,0 +1,122 @@
+clc; clear all; close all;
+
+
+folderPath = 'Session 5 -06';
+fileStruct = dir(fullfile(folderPath, '*.xlsx'));
+filelist = fullfile(folderPath, {fileStruct.name});
+
+fs = 60; g = 9.81;
+filesPerFigure = 5;  % 5 files × 3 subplots = 15 subplots per figure
+nFiles = length(filelist);
+nFigures = ceil(nFiles / filesPerFigure);
+
+% LOOP 
+for figIdx = 1:nFigures
+    figure('Name', ['Head Kinematics: Figure ' num2str(figIdx)], ...
+           'Color', 'w', ...
+           'Units', 'normalized', ...
+           'Position', [0.05 0.05 0.9 0.9]);
+
+    for subplotIdx = 1:filesPerFigure
+        fileIdx = (figIdx - 1) * filesPerFigure + subplotIdx;
+        if fileIdx > nFiles
+            break;
+        end
+
+        filename = filelist{fileIdx};
+        disp(['Processing: ' filename]);
+
+% Load
+        tbl_acc = readtable(filename, 'Sheet', 'Segment Acceleration');
+        tbl_pos = readtable(filename, 'Sheet', 'Segment Position');
+        tbl_vel = readtable(filename, 'Sheet', 'Segment Velocity');
+        tbl_rot = readtable(filename, 'Sheet', 'Segment Angular Acceleration');  % deg/s²
+
+        t = (0:height(tbl_pos)-1)' / fs;
+        z = tbl_pos.HeadZ;
+
+ % Linear acceleration magnitude (g) 
+        ax = tbl_acc.HeadX;
+        ay = tbl_acc.HeadY;
+        az = tbl_acc.HeadZ;
+        a_mag = sqrt(ax.^2 + ay.^2 + az.^2) / g;
+
+ % Vertical velocity 
+        velz = tbl_vel.HeadZ;
+
+ % Angular acceleration magnitude (rad/s²) 
+        wx = tbl_rot.HeadX;
+        wy = tbl_rot.HeadY;
+        wz = tbl_rot.HeadZ;
+        w_mag = sqrt(wx.^2 + wy.^2 + wz.^2);
+
+  % Algorithm 2
+
+        [~, peak_acc_idx] = max(a_mag);
+        window_radius = round(1 * fs);
+        start_idx = max(1, peak_acc_idx - window_radius);
+        end_idx = min(length(z), peak_acc_idx + window_radius);
+        velz_window = velz(start_idx:end_idx);
+        [~, vz0_rel_idx] = min(abs(velz_window));
+        vz0_idx = start_idx + vz0_rel_idx - 1;
+        epsilon = 0.005;
+        window_size = round(0.25 * fs);
+        
+        z_min = min(z);
+        score = a_mag ./ (z - z_min +0.005);
+        for i = 1:length(z)
+            i1 = max(1, i - window_size);
+            i2 = min(length(z), i + window_size);
+            z_min_local = min(z(i1:i2));
+            
+        end
+        [max_score, max_idx] = max(score);
+
+
+   % SUBPLOT 1: Z-pos + a_mag 
+        subplot(filesPerFigure, 3, (subplotIdx-1)*3 + 1);
+        yyaxis left;
+        plot(t, z, 'b-', 'LineWidth', 1.2);
+        ylabel('Z Pos (m)');
+        ylim([0, 2]);
+
+        yyaxis right;
+        plot(t, a_mag, 'k-', 'LineWidth', 1.2);
+        ylabel('a_{mag} (g)');
+        ylim([0, 20]);
+
+    % Threshold-based impact detection
+        z_floor = 0.6; acc_thresh = 5;
+        impact_frames = find(z < z_floor & a_mag > acc_thresh);
+        hold on;
+        scatter(t(impact_frames), a_mag(impact_frames), 60, 'r', 'filled');
+        scatter(t(peak_acc_idx), max(a_mag), 30, 'k', 'filled');
+        text(t(peak_acc_idx), max(a_mag), sprintf('  %.2f', max(a_mag)), 'VerticalAlignment', 'bottom', 'Color', 'k', 'FontSize', 8);title(['[' num2str(fileIdx) '] ' fileStruct(fileIdx).name], 'Interpreter', 'none');
+        grid on;
+        
+
+       
+
+   %SUBPLOT 2: Algorithm 2 score
+        subplot(filesPerFigure, 3, (subplotIdx-1)*3 + 2);
+        plot(t, score, 'm-', 'LineWidth', 1.2);
+        ylabel('Score');
+        xlabel('Time (s)');
+        title('a_{mag} / (z - min(z)+0.005)');
+        ylim([0, 2000]); 
+        grid on;
+        hold on;
+        scatter(t(max_idx), max_score, 60, 'k', 'filled');
+        text(t(max_idx), max_score, sprintf('  %.2f', max_score), 'VerticalAlignment', 'bottom', 'Color', 'k', 'FontSize', 8);
+
+  % SUBPLOT 3: Angular acceleration magnitude
+        subplot(filesPerFigure, 3, (subplotIdx-1)*3 + 3);
+        plot(t, w_mag, 'g-', 'LineWidth', 1.2);
+        ylabel('\alpha_{mag} (rad/s^2)');
+        xlabel('Time (s)');
+        title('Head Angular Acceleration Magnitude');
+        ylim([0, 2000]); 
+        grid on;
+    end
+    drawnow;  
+end

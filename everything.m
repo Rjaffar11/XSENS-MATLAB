@@ -64,7 +64,7 @@ for figIdx = 1:nFigures
         [min_z_in_window, min_z_rel_idx] = min(z_window);
         z_min_global_idx = start_idx + min_z_rel_idx - 1;
         z_vel0_dynamic = z(vz0_idx);
-        score = a_mag ./ (z - min(z)+0.0001);
+        score = a_mag ./ (z - min(z)+0.005);
         [max_score, max_idx] = max(score);
 
    % SUBPLOT 1: Z-pos + a_mag 
@@ -80,8 +80,9 @@ for figIdx = 1:nFigures
         ylim([0, 20]);
 
     % Threshold-based impact detection
-        z_floor = 0.6; acc_thresh = 5;
-        impact_frames = find(z < z_floor & a_mag > acc_thresh);
+        z_imp = min(z)+0.3 ; acc_thresh = 5;
+        impact_frames = find(z < z_imp & a_mag > acc_thresh);
+
         hold on;
         scatter(t(impact_frames), a_mag(impact_frames), 50, 'r', 'filled');
         scatter(t(vz0_idx), z(vz0_idx), 50, 'c', 'filled');
@@ -104,8 +105,8 @@ for figIdx = 1:nFigures
         plot(t, score, 'm-', 'LineWidth', 1.2);
         ylabel('Score');
         xlabel('Time (s)');
-        title('a_{mag} / (z - min(z)+0.0001)');
-        ylim([0, 10000]); 
+        title('a_{mag} / (z - min(z)+0.005)');
+        ylim([0, 2000]); 
         grid on;
         hold on;
         scatter(t(max_idx), max_score, 60, 'k', 'filled');

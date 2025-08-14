@@ -1,6 +1,6 @@
 clc; clear all; close all;
 
-folderPath = 'Session 5 -005';
+folderPath = 'Session 5 -05';
 fileStruct = dir(fullfile(folderPath, '*.xlsx'));
 filelist = fullfile(folderPath, {fileStruct.name});
 

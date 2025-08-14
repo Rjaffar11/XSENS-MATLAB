@@ -1,7 +1,7 @@
 clc; clear all; close all;
 
 
-folderPath = 'Session 5 -06';
+folderPath = 'Fireman Throw defence';
 fileStruct = dir(fullfile(folderPath, '*.xlsx'));
 filelist = fullfile(folderPath, {fileStruct.name});
 
@@ -50,7 +50,8 @@ for figIdx = 1:nFigures
         wz = tbl_rot.HeadZ;
         w_mag = sqrt(wx.^2 + wy.^2 + wz.^2);
 
-  % Algorithm 2 - 0 vel
+  % Algorithm 2
+
         [~, peak_acc_idx] = max(a_mag);
         window_radius = round(1 * fs);
         start_idx = max(1, peak_acc_idx - window_radius);
@@ -58,14 +59,19 @@ for figIdx = 1:nFigures
         velz_window = velz(start_idx:end_idx);
         [~, vz0_rel_idx] = min(abs(velz_window));
         vz0_idx = start_idx + vz0_rel_idx - 1;
-
-   % Algorithm 2: Find z_min near peak acceleration
-        z_window = z(start_idx:end_idx);
-        [min_z_in_window, min_z_rel_idx] = min(z_window);
-        z_min_global_idx = start_idx + min_z_rel_idx - 1;
-        z_vel0_dynamic = z(vz0_idx);
-        score = a_mag ./ (z - min(z));
+        epsilon = 0.005;
+        window_size = round(0.25 * fs);
+        
+        z_min = min(z);
+        score = a_mag ./ (z - z_min +0.005);
+        for i = 1:length(z)
+            i1 = max(1, i - window_size);
+            i2 = min(length(z), i + window_size);
+            z_min_local = min(z(i1:i2));
+            
+        end
         [max_score, max_idx] = max(score);
+
 
    % SUBPLOT 1: Z-pos + a_mag 
         subplot(filesPerFigure, 3, (subplotIdx-1)*3 + 1);
@@ -80,23 +86,15 @@ for figIdx = 1:nFigures
         ylim([0, 20]);
 
     % Threshold-based impact detection
-        z_floor = 0.6; acc_thresh = 5;
-        impact_frames = find(z < z_floor & a_mag > acc_thresh);
+        acc_thresh = 10;
+        impact_frames = find( a_mag > acc_thresh);
         hold on;
         scatter(t(impact_frames), a_mag(impact_frames), 50, 'r', 'filled');
-        scatter(t(vz0_idx), z(vz0_idx), 50, 'c', 'filled');
-        text(t(vz0_idx), z(vz0_idx), '  v_z=0', 'Color', 'c', 'FontSize', 8, 'VerticalAlignment', 'top');
-
-        title(['[' num2str(fileIdx) '] ' fileStruct(fileIdx).name], 'Interpreter', 'none');
+        scatter(t(max_idx), max(a_mag), 60, 'k', 'filled');
+        text(t(max_idx), max_score, sprintf('  %.2f', max_score), 'VerticalAlignment', 'bottom', 'Color', 'k', 'FontSize', 8);title(['[' num2str(fileIdx) '] ' fileStruct(fileIdx).name], 'Interpreter', 'none');
         grid on;
+        
 
-   % Plot z_min if it's close to peak acceleration
-        if abs(z_min_global_idx - peak_acc_idx) <= round(1 * fs)
-            yyaxis left;
-            scatter(t(z_min_global_idx), z(z_min_global_idx), 50, 'b', 'filled');
-            text(t(z_min_global_idx), z(z_min_global_idx), '  z_{min}', ...
-                 'Color', 'b', 'FontSize', 8, 'VerticalAlignment', 'top');
-        end
        
 
    %SUBPLOT 2: Algorithm 2 score
@@ -104,8 +102,8 @@ for figIdx = 1:nFigures
         plot(t, score, 'm-', 'LineWidth', 1.2);
         ylabel('Score');
         xlabel('Time (s)');
-        title('a_{mag} / (z - min(z)+0.0001)');
-        ylim([0, 10000]); 
+        title('a_{mag} / (z - min(z)+0.005)');
+        ylim([0, 1000]); 
         grid on;
         hold on;
         scatter(t(max_idx), max_score, 60, 'k', 'filled');
